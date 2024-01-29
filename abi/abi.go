@@ -208,6 +208,15 @@ func (m *Method) ID() []byte {
 	return dst
 }
 
+// ID returns the idHash of the method
+func (m *Method) IDHash() []byte {
+	k := acquireKeccak()
+	k.Write([]byte(m.Sig()))
+	dst := k.Sum(nil)
+	releaseKeccak(k)
+	return dst
+}
+
 // Encode encodes the inputs with this function
 func (m *Method) Encode(args interface{}) ([]byte, error) {
 	data, err := Encode(args, m.Inputs)
@@ -224,6 +233,19 @@ func (m *Method) Decode(data []byte) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("empty response")
 	}
 	respInterface, err := Decode(m.Outputs, data)
+	if err != nil {
+		return nil, err
+	}
+	resp := respInterface.(map[string]interface{})
+	return resp, nil
+}
+
+// Decode decodes the input with this function
+func (m *Method) DecodeInput(data []byte) (map[string]interface{}, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty response")
+	}
+	respInterface, err := Decode(m.Inputs, data)
 	if err != nil {
 		return nil, err
 	}
